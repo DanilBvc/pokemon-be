@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { seedDatabase } = require("../utils/seed.pokemon");
 
 const connectDB = async () => {
   try {
@@ -7,6 +8,7 @@ const connectDB = async () => {
       useUnifiedTopology: true,
     });
     console.log("MongoDB connected");
+    await seedDatabase();
   } catch (error) {
     console.error("MongoDB connection error:", error);
     process.exit(1);

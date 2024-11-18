@@ -1,14 +1,12 @@
-const { pokedex } = require("../static/pokedex");
 const GameSession = require("../models/game.schema");
+const pokemonSchema = require("../models/pokemon.schema");
 
 const getAttackerId = (player, computer) => {
   return player.base.Speed > computer.base.Speed ? player.id : computer.id;
 };
 
 exports.initializeGame = async (playerPokemonId, userAddress) => {
-  const playerPokemon = pokedex.find(
-    (pokemon) => pokemon.id === playerPokemonId
-  );
+  const playerPokemon = await pokemonSchema.findOne({ id: playerPokemonId });
   if (!playerPokemon) {
     throw new Error("Player's Pokémon not found");
   }
@@ -27,12 +25,12 @@ exports.initializeGame = async (playerPokemonId, userAddress) => {
     };
   }
 
-  const computerPokemon = pokedex
-    .filter(
-      (pokemon) =>
-        !pokemon.type.some((type) => playerPokemon.type.includes(type))
-    )
-    .sort(() => Math.random() - 0.5)[0];
+  const computerPokemon = await pokemonSchema
+    .aggregate([
+      { $match: { type: { $not: { $in: playerPokemon.type } } } },
+      { $sample: { size: 1 } },
+    ])
+    .then((results) => results[0]);
 
   const sessionId = `${Date.now()}-${Math.random()}`;
   const gameSession = new GameSession({
@@ -199,10 +197,14 @@ const calculateNewHp = (
   gameSession
 ) => {
   const newPlayerHp =
-    playerPokemon.id === defender.id ? defender.hp : gameSession.playerHp;
-  const newComputerHp =
-    computerPokemon.id === defender.id ? defender.hp : gameSession.computerHp;
+    playerPokemon.id === defender.id
+      ? Math.max(0, defender.hp)
+      : Math.max(0, gameSession.playerHp);
 
+  const newComputerHp =
+    computerPokemon.id === defender.id
+      ? Math.max(0, defender.hp)
+      : Math.max(0, gameSession.computerHp);
   return { newPlayerHp, newComputerHp };
 };
 

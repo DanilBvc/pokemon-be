@@ -7,15 +7,9 @@ router.get("/all", async (req, res) => {
     const page = parseInt(req.query.page, 10) || 1;
     const pageSize = parseInt(req.query.pageSize, 10) || 10;
 
-    const games = pokemonService.getAllPokemon(page, pageSize);
-    res.json({
-      data: games,
-      pagination: {
-        page,
-        pageSize,
-        total: pokemonService.getPokemonCount(),
-      },
-    });
+    const games = await pokemonService.getAllPokemon(page, pageSize);
+
+    res.json(games);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -23,7 +17,7 @@ router.get("/all", async (req, res) => {
 
 router.get("/types", async (req, res) => {
   try {
-    const types = pokemonService.getAllTypes();
+    const types = await pokemonService.getAllTypes();
     res.json(types);
   } catch (err) {
     res.status(500).json({ error: error.message });

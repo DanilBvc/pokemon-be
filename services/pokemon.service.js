@@ -1,18 +1,29 @@
-const { pokedex } = require("../static/pokedex");
+const Pokemon = require("../models/pokemon.schema");
 
-exports.getAllTypes = () => {
-  const types = new Set();
-  pokedex.forEach((pokemon) => {
-    pokemon.type.forEach((t) => types.add(t));
-  });
-  return Array.from(types);
+exports.getAllTypes = async () => {
+  const types = await Pokemon.distinct("type");
+  return types;
 };
 
-exports.getAllPokemon = (page = 1, pageSize = 10) => {
+exports.getAllPokemon = async (page = 1, pageSize = 10) => {
   const start = (page - 1) * pageSize;
-  return pokedex.slice(start, start + pageSize);
+
+  const pokemonList = await Pokemon.find().skip(start).limit(pageSize);
+
+  const total = await Pokemon.countDocuments();
+
+  const pagination = {
+    page,
+    pageSize,
+    total,
+  };
+  return {
+    data: pokemonList,
+    pagination,
+  };
 };
 
-exports.getPokemonCount = () => {
-  return pokedex.length;
+exports.getPokemonCount = async () => {
+  const count = await Pokemon.countDocuments();
+  return count;
 };
